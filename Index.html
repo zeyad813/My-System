@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>My System</title>
+<style>
+:root {
+  --bg:#0a0a0f;--surf:#111118;--surf2:#1a1a24;--border:#2a2a38;
+  --gold:#e8c547;--teal:#4ecdc4;--text:#e8e8f0;--muted:#7a7a9a;
+  --green:#5fba7d;--red:#ff6b6b;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif;min-height:100vh;overscroll-behavior:none;}
+button{font-family:inherit;cursor:pointer;}
+
+/* HEADER */
+.hdr{text-align:center;padding:28px 20px 18px;border-bottom:1px solid var(--border);background:var(--surf);}
+.hdr-tag{font-size:10px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;opacity:.7;}
+.hdr h1{font-family:Georgia,serif;font-size:clamp(1.7rem,6vw,2.4rem);line-height:1.1;margin-bottom:6px;}
+.hdr h1 em{color:var(--gold);font-style:italic;}
+.hdr-date{font-size:12px;color:var(--muted);font-family:monospace;}
+
+/* TABS */
+.tabbar{display:flex;overflow-x:auto;gap:2px;padding:6px;background:var(--surf);border-bottom:1px solid var(--border);scrollbar-width:none;position:sticky;top:0;z-index:100;}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;padding:8px 12px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:11px;white-space:nowrap;transition:all .2s;}
+.tab.on{background:var(--gold);color:#0a0a0f;}
+
+/* PANELS */
+.panel{display:none;max-width:820px;margin:0 auto;padding:16px 12px 60px;}
+.panel.on{display:block;}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;}
+.card-title{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;}
+
+/* TIMELINE ROWS */
+.tl-row{display:grid;grid-template-columns:82px 1fr;gap:10px;padding:9px 10px;border-radius:8px;margin-bottom:2px;}
+.tl-row.hl{background:rgba(232,197,71,.06);border-left:2px solid var(--gold);}
+.tl-time{font-family:monospace;font-size:11px;color:var(--gold);padding-top:2px;}
+.tl-text{font-size:13px;line-height:1.5;}
+.tl-text small{display:block;font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* DAY MODE TOGGLE */
+.day-toggle{display:flex;gap:8px;margin-bottom:16px;}
+.day-btn{flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-weight:700;font-size:12px;transition:all .2s;}
+.day-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(232,197,71,.08);}
+.subpanel{display:none;}
+.subpanel.on{display:block;}
+
+/* CHECK ITEMS */
+.check-item{display:flex;gap:12px;padding:11px 14px;background:var(--surf2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;align-items:flex-start;transition:border-color .15s;}
+.check-item.done{opacity:.55;border-color:rgba(95,186,125,.3);}
+.check-box{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s;margin-top:1px;}
+.check-item.done .check-box{background:var(--green);border-color:var(--green);color:#0a0a0f;}
+.check-label{font-size:13px;font-weight:700;line-height:1.4;}
+.check-item.done .check-label{text-decoration:line-through;color:var(--muted);}
+.check-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.check-tag{font-size:9px;padding:2px 6px;border-radius:10px;background:rgba(232,197,71,.1);color:var(--gold);margin-top:4px;display:inline-block;font-family:monospace;}
+
+/* SCORE GRID */
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.score-card{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.score-num{font-family:Georgia,serif;font-size:1.8rem;color:var(--gold);line-height:1;}
+.score-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+
+/* PROGRESS BAR */
+.prog-wrap{margin-bottom:18px;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;font-family:monospace;}
+.prog-bar{height:5px;background:var(--surf2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--teal));transition:width .4s;}
+
+/* HISTORY TIMELINE */
+.history-item{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.history-date{font-family:monospace;font-size:11px;color:var(--gold);margin-bottom:6px;}
+.history-score{font-size:13px;font-weight:700;margin-bottom:6px;}
+.history-pills{display:flex;flex-wrap:wrap;gap:4px;}
+.pill{font-size:9px;padding:2px 7px;border-radius:20px;font-family:monospace;}
+.pill.done{background:rgba(95,186,125,.15);color:var(--green);}
+.pill.miss{background:rgba(255,107,107,.1);color:var(--red);}
+
+/* PRAYER */
+.prayer-row{background:var(--surf2);border-radius:10px;border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;}
+.prayer-name{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.prayer-checks{display:flex;gap:6px;flex-wrap:wrap;}
+.p-dot{cursor:pointer;text-align:center;}
+.p-box{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;transition:all .15s;}
+.p-dot.done .p-box{background:var(--green);border-color:var(--green);color:#0a0a0f;}
+.p-lbl{font-size:8px;color:var(--muted);margin-top:3px;max-width:38px;text-align:center;font-family:monospace;line-height:1.3;}
+
+/* FASTING */
+.fast-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.fast-day{aspect-ratio:1;border-radius:8px;border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .15s;}
+.fast-day.fasting{background:rgba(232,197,71,.08);border-color:var(--gold);}
+.fast-day.fasting-done{background:rgba(95,186,125,.12);border-color:var(--green);}
+.fast-day .fd-d{font-size:9px;font-family:monospace;color:var(--muted);}
+.fast-day.fasting .fd-d{color:var(--gold);}
+.fast-day.fasting-done .fd-d{color:var(--green);}
+.fast-day .fd-i{font-size:13px;}
+
+/* STUDY */
+.study-item{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:12px 14px;background:var(--surf2);border-radius:9px;border:1px solid var(--border);margin-bottom:7px;transition:border-color .15s;}
+.study-item.exam{border-color:var(--red);background:rgba(255,107,107,.04);}
+.study-item.s-done{border-color:rgba(95,186,125,.3);}
+.s-num{font-family:Georgia,serif;font-size:19px;color:var(--gold);line-height:1;}
+.study-item.exam .s-num{color:var(--red);}
+.s-date{font-size:10px;color:var(--muted);font-family:monospace;}
+.s-task{font-size:13px;font-weight:700;}
+.s-sub{font-size:11px;color:var(--teal);}
+.s-chk{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.s-chk.done{background:var(--green);border-color:var(--green);color:#0a0a0f;}
+
+/* WORKOUT TABLE */
+.wo-table{width:100%;border-collapse:collapse;font-size:11px;}
+.wo-table th{font-family:monospace;font-size:9px;color:var(--muted);text-transform:uppercase;padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;letter-spacing:.08em;}
+.wo-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.wo-table tr:last-child td{border-bottom:none;}
+.ex-name{font-weight:700;color:var(--teal);}
+.ex-alt{color:var(--muted);font-size:10px;}
+.weight-input{background:var(--surf);border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:11px;font-family:monospace;padding:4px 7px;width:64px;text-align:center;outline:none;transition:border-color .15s;}
+.weight-input:focus{border-color:var(--gold);}
+.weight-input::placeholder{color:var(--muted);}
+
+/* MEALS */
+.meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:500px){.meal-grid{grid-template-columns:1fr;}}
+.meal-card{background:var(--surf2);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.meal-hdr{padding:8px 12px;font-size:11px;font-weight:700;color:var(--gold);background:rgba(232,197,71,.07);border-bottom:1px solid var(--border);}
+.meal-body{padding:10px 12px;}
+.meal-line{font-size:11px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.5;}
+.meal-line:last-child{border-bottom:none;}
+.meal-line.accent{color:var(--gold);}
+
+/* GROCERY */
+.grocery-grid{columns:2;gap:14px;}
+@media(max-width:400px){.grocery-grid{columns:1;}}
+.g-item{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;cursor:pointer;break-inside:avoid;}
+.g-box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;transition:all .15s;}
+.g-item.done .g-box{background:var(--green);border-color:var(--green);color:#0a0a0f;}
+.g-item.done span{text-decoration:line-through;color:var(--muted);}
+
+/* BUDGET */
+.budget-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 14px;background:var(--surf2);border-radius:8px;margin-bottom:7px;font-size:12px;}
+.b-tag{font-family:monospace;font-size:10px;padding:2px 8px;border-radius:20px;}
+.b-ok{background:rgba(95,186,125,.15);color:var(--green);}
+.b-warn{background:rgba(232,197,71,.15);color:var(--gold);}
+.b-over{background:rgba(255,107,107,.15);color:var(--red);}
+.rule-line{font-size:12px;color:var(--muted);padding:9px 14px;border-left:2px solid var(--teal);margin-bottom:8px;line-height:1.6;}
+
+/* IDENTITY */
+.id-card{background:linear-gradient(135deg,rgba(232,197,71,.08),rgba(78,205,196,.05));border:1px solid rgba(232,197,71,.2);border-radius:14px;padding:24px;text-align:center;margin-bottom:12px;}
+.id-card p{font-family:Georgia,serif;font-size:clamp(.95rem,3vw,1.2rem);line-height:1.7;font-style:italic;}
+.nn-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surf2);border-radius:9px;border:1px solid var(--border);margin-bottom:7px;font-size:13px;font-weight:600;}
+.nn-num{font-family:Georgia,serif;font-size:18px;color:var(--gold);width:20px;flex-shrink:0;}
+
+/* SADAQA */
+.sadaqa-box{background:rgba(232,197,71,.06);border:1px solid rgba(232,197,71,.2);border-radius:14px;padding:22px;text-align:center;margin-bottom:12px;}
+.sadaqa-btn{padding:10px 24px;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit;}
+
+/* RESET BANNER */
+.reset-banner{background:rgba(232,197,71,.08);border:1px solid rgba(232,197,71,.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--gold);text-align:center;display:none;}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:18px 0;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.panel.on{animation:fadeUp .25s ease both;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-tag">19 · Med Student · Muslim · Hard Mode</div>
+  <h1>My <em>System.</em></h1>
+  <div class="hdr-date" id="hdr-date"></div>
+</div>
+
+<div class="tabbar">
+  <button class="tab on" onclick="switchTab('routine',this)">☀️ Routine</button>
+  <button class="tab" onclick="switchTab('habits',this)">✅ Habits</button>
+  <button class="tab" onclick="switchTab('deen',this)">🕌 Deen</button>
+  <button class="tab" onclick="switchTab('study',this)">📚 Study</button>
+  <button class="tab" onclick="switchTab('workout',this)">💪 Workout</button>
+  <button class="tab" onclick="switchTab('meals',this)">🍗 Meals</button>
+  <button class="tab" onclick="switchTab('budget',this)">💰 Budget</button>
+  <button class="tab" onclick="switchTab('history',this)">📅 History</button>
+  <button class="tab" onclick="switchTab('identity',this)">🧠 Identity</button>
+</div>
+
+<!-- ══════════ ROUTINE ══════════ -->
+<div class="panel on" id="panel-routine">
+  <div class="day-toggle">
+    <button class="day-btn on" id="btn-college" onclick="switchDay('college')">🎓 College Day</button>
+    <button class="day-btn" id="btn-home" onclick="switchDay('home')">🏠 Home Day</button>
+  </div>
+
+  <div class="subpanel on" id="sub-college">
+    <div class="card"><div class="card-title">☀️ Morning — College Day</div>
+      <div class="tl-row hl"><div class="tl-time">5:30 AM</div><div class="tl-text">WAKE UP — alarm across the room<small>Water immediately. Don't touch your phone.</small></div></div>
+      <div class="tl-row hl"><div class="tl-time">5:35 AM</div><div class="tl-text">Fajr Sunnah (2 rak'ah) → Fajr prayer<small>Start the day with Allah before anything else.</small></div></div>
+      <div class="tl-row"><div class="tl-time">5:50–6:10</div><div class="tl-text">Wash face, get fully dressed</div></div>
+      <div class="tl-row"><div class="tl-time">6:10–6:20</div><div class="tl-text">Breakfast — Meal A or B<small>No screens while eating.</small></div></div>
+      <div class="tl-row"><div class="tl-time">6:20–6:30</div><div class="tl-text">Write 3 tasks on paper + Quran 5–10 min</div></div>
+      <div class="tl-row hl"><div class="tl-time">6:30 AM</div><div class="tl-text">Leave for college or Deep Work begins<small>Phone in bag, not in hand.</small></div></div>
+    </div>
+    <div class="card"><div class="card-title">📚 During College</div>
+      <div class="tl-row"><div class="tl-time">Classes</div><div class="tl-text">Attend all. Handwritten notes. Review within 1h.</div></div>
+      <div class="tl-row hl"><div class="tl-time">Dhuhr/Asr</div><div class="tl-text">Pray on time — find a musalla or quiet corner.<small>10 minutes. Non-negotiable.</small></div></div>
+      <div class="tl-row"><div class="tl-time">Breaks</div><div class="tl-text">No Instagram/TikTok. Review notes or rest eyes.</div></div>
+    </div>
+    <div class="card"><div class="card-title">🌆 Evening — College Day</div>
+      <div class="tl-row"><div class="tl-time">After college</div><div class="tl-text">Lunch + 20 min rest (eyes closed, no phone)</div></div>
+      <div class="tl-row hl"><div class="tl-time">Study Block 1</div><div class="tl-text">60–90 min active recall<small>Phone in another room.</small></div></div>
+      <div class="tl-row"><div class="tl-time">4–5:30 PM</div><div class="tl-text">Earned free time — 45 min social media max</div></div>
+      <div class="tl-row hl"><div class="tl-time">After Maghrib</div><div class="tl-text">Study Block 2 — 60–90 min, spaced repetition</div></div>
+      <div class="tl-row"><div class="tl-time">After Isha</div><div class="tl-text">Witr prayer then wind down</div></div>
+      <div class="tl-row hl"><div class="tl-time">9:00 PM</div><div class="tl-text">PHONE OFF — outside bedroom. Every night.</div></div>
+      <div class="tl-row hl"><div class="tl-time">9:30 PM</div><div class="tl-text">In bed. Lights out by 10:00 PM.</div></div>
+    </div>
+  </div>
+
+  <div class="subpanel" id="sub-home">
+    <div class="card"><div class="card-title">☀️ Morning — Home Day</div>
+      <div class="tl-row hl"><div class="tl-time">5:30 AM</div><div class="tl-text">WAKE UP — same time. Home is not an excuse.<small>Consistency is everything.</small></div></div>
+      <div class="tl-row hl"><div class="tl-time">5:35 AM</div><div class="tl-text">Fajr Sunnah + Fajr — pray with family if possible</div></div>
+      <div class="tl-row"><div class="tl-time">5:50–6:15</div><div class="tl-text">Quran 10–15 min + morning dhikr</div></div>
+      <div class="tl-row"><div class="tl-time">6:15–6:30</div><div class="tl-text">Write 3 tasks. Even at home you have targets.</div></div>
+      <div class="tl-row hl"><div class="tl-time">6:30–8:00</div><div class="tl-text">Deep Work Block 1 — door closed<small>Tell family you're unavailable until 8.</small></div></div>
+      <div class="tl-row"><div class="tl-time">8:00–8:30</div><div class="tl-text">Breakfast with family. No phone at the table.</div></div>
+    </div>
+    <div class="card"><div class="card-title">🌤 Daytime — Home Day</div>
+      <div class="tl-row hl"><div class="tl-time">8:30–11:30</div><div class="tl-text">Deep Work Block 2 — Pomodoro 50/10</div></div>
+      <div class="tl-row"><div class="tl-time">Dhuhr</div><div class="tl-text">Pray with family — 4 before + 2 after sunnah</div></div>
+      <div class="tl-row"><div class="tl-time">12:30–1:30</div><div class="tl-text">Lunch with family. Be present.</div></div>
+      <div class="tl-row"><div class="tl-time">Asr</div><div class="tl-text">Asr prayer — on time, always</div></div>
+      <div class="tl-row"><div class="tl-time">4–5:30 PM</div><div class="tl-text">Free time — 45 min social media max</div></div>
+      <div class="tl-row hl"><div class="tl-time">Maghrib</div><div class="tl-text">Maghrib with family + 2 sunnah after<small>Don't miss this.</small></div></div>
+      <div class="tl-row"><div class="tl-time">Isha</div><div class="tl-text">Isha + 2 sunnah after + Witr</div></div>
+      <div class="tl-row hl"><div class="tl-time">9:00 PM</div><div class="tl-text">PHONE OFF. Same rule at home.</div></div>
+      <div class="tl-row hl"><div class="tl-time">9:30 PM</div><div class="tl-text">In bed. Lights out 10:00 PM.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HABITS ══════════ -->
+<div class="panel" id="panel-habits">
+  <div class="reset-banner" id="habits-reset-banner">✨ New day — habits reset. Yesterday's log saved in History.</div>
+  <div class="score-grid">
+    <div class="score-card"><div class="score-num" id="h-done">0</div><div class="score-lbl">Done</div></div>
+    <div class="score-card"><div class="score-num" id="h-pct">0%</div><div class="score-lbl">Rate</div></div>
+    <div class="score-card"><div class="score-num" id="h-streak">0🔥</div><div class="score-lbl">Streak</div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-lbl"><span>Today's Progress</span><span id="h-prog-txt">0/0</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="h-prog-fill" style="width:0%"></div></div>
+  </div>
+  <div id="habit-list"></div>
+  <div class="card" style="text-align:center;padding:18px;">
+    <div style="font-family:Georgia,serif;font-size:1.2rem;color:var(--gold);font-style:italic;margin-bottom:8px;">"Never miss twice in a row."</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;">One bad day is human. Two is a pattern.<br>You are a future doctor — train the discipline now.</div>
+  </div>
+</div>
+
+<!-- ══════════ DEEN ══════════ -->
+<div class="panel" id="panel-deen">
+  <div class="reset-banner" id="deen-reset-banner">✨ New day — deen tracker reset.</div>
+
+  <div class="sadaqa-box">
+    <div style="font-family:Georgia,serif;font-size:1.1rem;color:var(--gold);margin-bottom:6px;">🤲 Monthly Sadaqa</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px;">Set an amount at the start of each month and give it before it ends.<br>Even a small amount given consistently is beloved to Allah.</div>
+    <button class="sadaqa-btn" id="sadaqa-btn" onclick="toggleSadaqa()">Mark as Given This Month ✓</button>
+  </div>
+
+  <div class="card"><div class="card-title">🕌 5 Prayers + Rawatib Sunnah</div>
+    <div id="prayer-grid"></div>
+  </div>
+
+  <div class="card"><div class="card-title">☀️ Duha + 🌙 Witr</div>
+    <div id="extra-prayers"></div>
+  </div>
+
+  <div class="card"><div class="card-title">📖 Daily Quran — After Fajr (5–10 min)</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;" id="quran-days"></div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+      Read from your Mushaf — not an app.<br>
+      <span style="color:var(--gold);">Friday:</span> Surat Al-Kahf (full surah).
+    </div>
+  </div>
+
+  <div class="card"><div class="card-title">🌙 Sunnah Fasting</div>
+    <div class="fast-grid" id="fast-grid"></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);font-family:monospace;text-align:center;">Al-Ayyam Al-Bid (14th–16th Hijri) — mark in your phone calendar.</div>
+  </div>
+</div>
+
+<!-- ══════════ STUDY ══════════ -->
+<div class="panel" id="panel-study">
+  <div class="card"><div class="card-title">🧠 Study Method — Every Session</div>
+    <div class="tl-row"><div class="tl-time">Active Recall</div><div class="tl-text">Read once → close notes → write everything from memory.<small>This is how doctors think. Train it now.</small></div></div>
+    <div class="tl-row"><div class="tl-time">Pomodoro</div><div class="tl-text">50 min on / 10 min off. Phone in another room.</div></div>
+    <div class="tl-row"><div class="tl-time">Spaced Rep</div><div class="tl-text">Every 3rd day: 20-min review of oldest material.</div></div>
+    <div class="tl-row hl"><div class="tl-time">Teach-Back</div><div class="tl-text">Explain each lecture out loud after studying it.<small>If you can't explain it simply, you don't know it.</small></div></div>
+  </div>
+  <div id="study-list"></div>
+</div>
+
+<!-- ══════════ WORKOUT ══════════ -->
+<div class="panel" id="panel-workout">
+  <div class="reset-banner" id="workout-reset-banner">✨ New day — workout log reset.</div>
+  <div class="card"><div class="card-title">⚠️ Warm Up — Before Every Session</div>
+    <div class="tl-row"><div class="tl-time">Always</div><div class="tl-text">Pallof Press · Pallof Rotation · External Rotation · Scapula Push Plus<small>10 reps each. ~10 min. Not optional.</small></div></div>
+    <div class="tl-row"><div class="tl-time">Each ex</div><div class="tl-text">1–2 warm-up sets at ~50–60% of working weight before each lift.</div></div>
+  </div>
+  <div id="workout-days"></div>
+</div>
+
+<!-- ══════════ MEALS ══════════ -->
+<div class="panel" id="panel-meals">
+  <div class="card"><div class="card-title">🍗 Meal A — Chicken + Rice + Veg</div>
+    <div class="meal-grid">
+      <div class="meal-card">
+        <div class="meal-hdr">🌶️ Shawarma Style</div>
+        <div class="meal-body">
+          <div class="meal-line">250g chicken strips</div>
+          <div class="meal-line">Marinate: garlic + vinegar + paprika + cumin + turmeric + salt + pepper</div>
+          <div class="meal-line">Pan + oil → don't touch 2–3 min → stir → 10–12 min</div>
+          <div class="meal-line">Rice: 1 cup + 2 cups water → boil → low → cover 15 min</div>
+          <div class="meal-line">Veg: fry onions → tomatoes → mix with rice</div>
+          <div class="meal-line accent">✨ Squeeze lemon at end = massive upgrade</div>
+        </div>
+      </div>
+      <div class="meal-card">
+        <div class="meal-hdr">🍅 Spicy Tomato</div>
+        <div class="meal-body">
+          <div class="meal-line">Fry onion + garlic</div>
+          <div class="meal-line">Add chicken → 5–6 min</div>
+          <div class="meal-line">Add tomatoes + paprika + chili + salt</div>
+          <div class="meal-line">Simmer 10 min → saucy</div>
+          <div class="meal-line accent">Better for batch cooking</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">🥚 Meal B — Eggs + Potato</div>
+    <div class="meal-grid">
+      <div class="meal-card">
+        <div class="meal-hdr">🥔 Crispy Skillet</div>
+        <div class="meal-body">
+          <div class="meal-line">Cube 300g potatoes small</div>
+          <div class="meal-line">Boil 5–7 min → pan + oil → fry crispy</div>
+          <div class="meal-line">Crack 4 eggs on top + salt + pepper</div>
+          <div class="meal-line">Cover → cook → add 50g cheese</div>
+          <div class="meal-line accent">Crispy + soft + cheesy 🔥</div>
+        </div>
+      </div>
+      <div class="meal-card">
+        <div class="meal-hdr">🍳 Shakshouka</div>
+        <div class="meal-body">
+          <div class="meal-line">Fry onion + garlic</div>
+          <div class="meal-line">Add 2 tomatoes + paprika + cumin + salt</div>
+          <div class="meal-line">Thick sauce → make holes → crack 4 eggs</div>
+          <div class="meal-line">Cover → set → cheese on top</div>
+          <div class="meal-line accent">Eat with potatoes on side</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">🛒 Grocery List</div>
+    <div class="grocery-grid" id="grocery-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ BUDGET ══════════ -->
+<div class="panel" id="panel-budget">
+  <div class="card"><div class="card-title">💰 Spending Categories</div>
+    <div class="budget-row"><div style="font-weight:600">🛒 Groceries</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">Weekly budget</div><div class="b-tag b-ok">Essential</div></div>
+    <div class="budget-row"><div style="font-weight:600">🍔 Eating out (max 2×/week)</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">Cap it</div><div class="b-tag b-warn">Limit</div></div>
+    <div class="budget-row"><div style="font-weight:600">🚌 Transport</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">Fixed</div><div class="b-tag b-ok">Essential</div></div>
+    <div class="budget-row"><div style="font-weight:600">📚 Study materials</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">Planned only</div><div class="b-tag b-ok">Essential</div></div>
+    <div class="budget-row"><div style="font-weight:600">🛍️ Random online buys</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">48hr rule</div><div class="b-tag b-over">Cut</div></div>
+    <div class="budget-row"><div style="font-weight:600">☕ Coffee out</div><div style="font-family:monospace;font-size:11px;color:var(--gold)">Make at home</div><div class="b-tag b-warn">Reduce</div></div>
+  </div>
+  <div class="card"><div class="card-title">📋 Money Rules</div>
+    <div class="rule-line"><strong style="color:var(--text)">48-Hour Rule: </strong>Any non-essential purchase waits 48 hours. 80% of the time you won't want it.</div>
+    <div class="rule-line"><strong style="color:var(--text)">Cook to Save: </strong>Your meal plan is built — use it. Eating out drains your budget fast.</div>
+    <div class="rule-line"><strong style="color:var(--text)">Sunday Finance Check: </strong>10 minutes every Sunday. Write every expense. Awareness changes behaviour.</div>
+    <div class="rule-line"><strong style="color:var(--text)">Remove Saved Cards: </strong>Delete saved payment info from shopping apps. Friction kills impulse.</div>
+    <div class="rule-line"><strong style="color:var(--text)">Sadaqa First: </strong>Set aside sadaqa before any optional spending each month.</div>
+  </div>
+</div>
+
+<!-- ══════════ HISTORY ══════════ -->
+<div class="panel" id="panel-history">
+  <div class="card"><div class="card-title">📅 Habit History — Past Days</div>
+    <div id="history-list"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">No history yet. Complete habits today and they'll appear here tomorrow.</div></div>
+  </div>
+</div>
+
+<!-- ══════════ IDENTITY ══════════ -->
+<div class="panel" id="panel-identity">
+  <div class="id-card">
+    <p>You didn't lose your drive.<br>It got buried under <span style="color:var(--gold);font-style:normal">6 hours of TikTok</span>, guilt, and exhaustion.<br>This system is just you <span style="color:var(--teal);font-style:normal">returning to who you already are.</span></p>
+  </div>
+  <div class="card"><div class="card-title">🪞 Who You Are Becoming</div>
+    <div class="nn-item"><div class="nn-num">→</div>I am a Muslim who protects his prayers above everything.</div>
+    <div class="nn-item"><div class="nn-num">→</div>I am someone who wakes at 5:30 AM — no matter what.</div>
+    <div class="nn-item"><div class="nn-num">→</div>I am a future doctor who studies even when he doesn't feel like it.</div>
+    <div class="nn-item"><div class="nn-num">→</div>I am someone who controls his phone — it doesn't control me.</div>
+    <div class="nn-item"><div class="nn-num">→</div>I am someone who will make his family and his Lord proud.</div>
+  </div>
+  <div class="card"><div class="card-title">⚡ Emergency Protocol</div>
+    <div class="tl-row"><div class="tl-time">Step 1</div><div class="tl-text">Don't spiral. One bad hour ≠ bad day.</div></div>
+    <div class="tl-row hl"><div class="tl-time">Step 2</div><div class="tl-text">Make wudu. Pray 2 rak'ah. Reset.<small>This alone changes your mental state more than anything else.</small></div></div>
+    <div class="tl-row"><div class="tl-time">Step 3</div><div class="tl-text">Ask: "What is the smallest thing I can do right now?" Then do it.</div></div>
+    <div class="tl-row hl"><div class="tl-time">The Rule</div><div class="tl-text">Never miss twice in a row. Tomorrow is a clean slate.</div></div>
+  </div>
+  <div class="card"><div class="card-title">📌 6 Daily Non-Negotiables</div>
+    <div class="nn-item"><div class="nn-num">1</div>Wake at 5:30 AM — no snooze, ever</div>
+    <div class="nn-item"><div class="nn-num">2</div>Pray all 5 prayers on time</div>
+    <div class="nn-item"><div class="nn-num">3</div>Write 3 tasks on paper and complete them</div>
+    <div class="nn-item"><div class="nn-num">4</div>No social media before 4:00 PM</div>
+    <div class="nn-item"><div class="nn-num">5</div>Study minimum 2 hours — phone in another room</div>
+    <div class="nn-item"><div class="nn-num">6</div>Phone off, in bed by 9:30 PM</div>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTS ───
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const TODAY_KEY = () => new Date().toISOString().split('T')[0];
+
+const HABITS_DEF = [
+  {l:"Wake at 5:30 AM",s:"No snooze. Alarm across the room.",days:"all",c:"#e8c547"},
+  {l:"Fajr on time",s:"Every single day.",days:"all",c:"#5fba7d"},
+  {l:"All 5 prayers on time",s:"Non-negotiable.",days:"all",c:"#5fba7d"},
+  {l:"Daily Quran (5–10 min)",s:"After Fajr. Mushaf only.",days:"all",c:"#e8c547"},
+  {l:"Surat Al-Kahf",s:"Fridays only.",days:[4],c:"#4ecdc4"},
+  {l:"Study Block 1 (60–90 min)",s:"Active recall. Phone away.",days:"all",c:"#4ecdc4"},
+  {l:"Study Block 2 (60–90 min)",s:"Spaced repetition.",days:"all",c:"#4ecdc4"},
+  {l:"3 tasks written + done",s:"Physical notebook.",days:"all",c:"#e8c547"},
+  {l:"No social media before 4 PM",s:"Instagram + TikTok locked.",days:"all",c:"#ff6b6b"},
+  {l:"Healthy meal cooked",s:"Meal A or B.",days:"all",c:"#5fba7d"},
+  {l:"Gym — Full Body #1",s:"Saturday.",days:[5],c:"#4ecdc4"},
+  {l:"Gym — Full Body #2",s:"Monday.",days:[0],c:"#4ecdc4"},
+  {l:"Gym — Full Body #3",s:"Wednesday.",days:[2],c:"#4ecdc4"},
+  {l:"Sunnah Fast",s:"Monday + Wednesday.",days:[0,2],c:"#e8c547"},
+  {l:"Phone off by 9 PM",s:"Outside bedroom.",days:"all",c:"#ff6b6b"},
+  {l:"In bed by 9:30 PM",s:"Lights out by 10 PM.",days:"all",c:"#ff6b6b"},
+];
+
+const PRAYERS_DEF = [
+  {n:"الفجر — Fajr", items:["Fard","2 before"]},
+  {n:"الظهر — Dhuhr", items:["Fard","4 before","2 after"]},
+  {n:"العصر — Asr", items:["Fard"]},
+  {n:"المغرب — Maghrib", items:["Fard","2 after"]},
+  {n:"العشاء — Isha", items:["Fard","2 after"]},
+];
+
+const WO_DAYS = [
+  {title:"💪 Full Body #1 — Saturday", day:"Sat", exercises:[
+    ["Smith High Incline Press","1","4~6","DB High Incline Press"],
+    ["T Bar Row","1","5~7","Incline DB Row"],
+    ["Machine Lateral Raises","1","6~8","Cable Lateral Raises"],
+    ["Machine Wide Grip Lat Pulldown","1","6~8","Cable Wide Grip Lat Pulldown"],
+    ["DB Preacher Curl","1","6~10","Face Away Curl"],
+    ["SA Tricep Pushdown","1","6~10","Double Rope Pushdown"],
+    ["Seated Leg Curl","1","8~12","Lying Leg Curl"],
+    ["Leg Extension","1","8~12","Banded Leg Extension"],
+    ["Leg Press Calf Raises","2","5~7","Smith Calf Raises"],
+    ["SA Rear Delt Flies","1","6~10","Reverse Pec Dec"],
+    ["Wrist Curls","1","6~10","—"],
+  ]},
+  {title:"💪 Full Body #2 — Monday", day:"Mon", exercises:[
+    ["Hack Squat","1","5~8","Smith Squat / Leg Press"],
+    ["Seated Leg Curl","1","6~10","Lying Leg Curl"],
+    ["Hip Adduction","1","6~8","Cable Hip Adduction"],
+    ["T Bar Row","1","5~7","Incline DB Row"],
+    ["Chest Press Machine","1","8~10","DB Flat Press"],
+    ["SA Lat Row","1","6~10","Cable SA Lat Row"],
+    ["Machine Shoulder Press","1","6~10","DB Shoulder Press"],
+    ["DB Preacher Curl","1","6~10","Face Away Curl"],
+    ["SA Tricep Pushdown","1","6~10","Double Rope Pushdown"],
+    ["Reverse Pec Dec","1","6~10","SA Rear Delt Flies"],
+    ["Lat Pulldown Crunches","1","6~10","Cable Crunch"],
+  ]},
+  {title:"💪 Full Body #3 — Wednesday", day:"Wed", exercises:[
+    ["SLDL","1","5~7","RDL / Hip Extension"],
+    ["45D T Bar Row","2","5~7","45D Incline DB Row"],
+    ["Incline Chest Press Machine","2","6~8","DB Incline Press"],
+    ["Leg Extension","2","6~10","Banded Leg Extension"],
+    ["SA Y Raises","2","6~8","Machine Lateral Raises"],
+    ["Face Away Curl","1","6~10","DB Preacher Curl"],
+    ["Overhead Extension","1","6~10","DB Skull Crusher"],
+    ["Hip Adduction","1","6~8","Cable Hip Adduction"],
+    ["Leg Press Calf Raises","2","6~8","Smith Calf Raises"],
+    ["Wrist Curls","1","6~10","—"],
+  ]},
+];
+
+const STUDY_DAYS = [
+  {l:"Lec 1–5",t:"Foundational content",r:""},
+  {l:"Lec 6–10",t:"Build + connect concepts",r:"Review 1–5 (20 min)"},
+  {l:"Lec 11–15",t:"Deep dive",r:""},
+  {l:"Lec 16–20",t:"Consolidation + summary notes",r:"Review 1–10 (30 min)"},
+  {l:"Lec 21–25",t:"Push through the middle",r:""},
+  {l:"Lec 26–30",t:"Halfway — stay consistent",r:"Review 11–20 (30 min)"},
+  {l:"Lec 31–35",t:"Active recall only",r:""},
+  {l:"Lec 36–40",t:"Teach-back every lecture",r:"Review 21–30 (30 min)"},
+  {l:"Lec 41–45",t:"Fill your gaps",r:""},
+  {l:"Lec 46–51",t:"Complete the set",r:"Review 31–40 (30 min)"},
+  {l:"FULL REVIEW",t:"No new material. Revise all 51.",r:"Final cheat sheet"},
+  {l:"🎯 EXAM DAY",t:"Light review. Trust your prep.",r:"You've done the work.",exam:true},
+];
+
+const GROCERIES = ["Chicken breast 3kg","Eggs ×30","Cheese 500g","Rice 1.5kg","Potatoes 3–4kg","Garlic","Onions 1kg","Tomatoes 2kg","Lemon ×4","Vinegar","Olive oil","Salt","Black pepper","Paprika","Cumin","Turmeric","Chili powder"];
+
+// ─── STORAGE ───
+const LS = {
+  get:(k,d={})=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+};
+
+// ─── STATE ───
+let state = {
+  habits: LS.get('habits_'+TODAY_KEY(),{}),
+  deen: LS.get('deen_'+TODAY_KEY(),{}),
+  study: LS.get('study_persistent',{}),
+  weights: LS.get('weights_persistent',{}),
+  grocery: LS.get('grocery_persistent',{}),
+  sadaqa: LS.get('sadaqa_'+new Date().toISOString().slice(0,7), false),
+  lastDate: LS.get('lastDate',''),
+};
+
+// ─── DAILY RESET CHECK ───
+function checkDailyReset() {
+  const today = TODAY_KEY();
+  if (state.lastDate && state.lastDate !== today) {
+    // Save yesterday to history
+    const history = LS.get('history',[]);
+    const yesterdayHabits = LS.get('habits_'+state.lastDate,{});
+    const yesterdayDeen = LS.get('deen_'+state.lastDate,{});
+    if (Object.keys(yesterdayHabits).length > 0 || Object.keys(yesterdayDeen).length > 0) {
+      history.unshift({date:state.lastDate, habits:yesterdayHabits, deen:yesterdayDeen});
+      if (history.length > 30) history.pop();
+      LS.set('history', history);
+    }
+    // Show reset banners
+    ['habits-reset-banner','deen-reset-banner','workout-reset-banner'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.style.display='block';setTimeout(()=>el.style.display='none',4000);}
+    });
+  }
+  LS.set('lastDate', today);
+  state.lastDate = today;
+}
+
+// ─── TABS ───
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+function switchDay(d) {
+  document.getElementById('btn-college').classList.toggle('on', d==='college');
+  document.getElementById('btn-home').classList.toggle('on', d==='home');
+  document.getElementById('sub-college').classList.toggle('on', d==='college');
+  document.getElementById('sub-home').classList.toggle('on', d==='home');
+}
+document.getElementById('sub-college').classList.add('on');
+
+// ─── DATE HEADER ───
+function updateDateHeader() {
+  const now = new Date();
+  document.getElementById('hdr-date').textContent = now.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+// ─── HABITS ───
+function renderHabits() {
+  const list = document.getElementById('habit-list');
+  const todayDow = (new Date().getDay()+6)%7;
+  list.innerHTML = '';
+  let total=0, done=0;
+  HABITS_DEF.forEach((h,i) => {
+    const relevant = h.days==='all' || h.days.includes(todayDow);
+    if(!relevant) return;
+    total++;
+    const isDone = !!state.habits[i];
+    if(isDone) done++;
+    const tag = h.days!=='all' ? h.days.map(d=>DAYS[d]).join(' · ') : null;
+    const div = document.createElement('div');
+    div.className = 'check-item'+(isDone?' done':'');
+    div.innerHTML = `<div class="check-box">✓</div><div style="flex:1"><div class="check-label" style="color:${isDone?'var(--muted)':h.c}">${h.l}</div><div class="check-sub">${h.s}</div>${tag?`<div class="check-tag">${tag}</div>`:''}</div>`;
+    div.onclick = () => {
+      state.habits[i] = !state.habits[i];
+      LS.set('habits_'+TODAY_KEY(), state.habits);
+      renderHabits();
+    };
+    list.appendChild(div);
+  });
+  document.getElementById('h-done').textContent = done;
+  const pct = total>0?Math.round(done/total*100):0;
+  document.getElementById('h-pct').textContent = pct+'%';
+  document.getElementById('h-prog-fill').style.width = pct+'%';
+  document.getElementById('h-prog-txt').textContent = `${done}/${total}`;
+  // streak
+  const history = LS.get('history',[]);
+  let streak = pct>=80?1:0;
+  for(let i=0;i<history.length;i++){
+    const hh=history[i].habits;
+    const tot=Object.keys(hh).length;
+    const dn=Object.values(hh).filter(Boolean).length;
+    if(tot>0&&dn/tot>=.8) streak++; else break;
+  }
+  document.getElementById('h-streak').textContent = streak+(streak>0?'🔥':'');
+}
+
+// ─── PRAYERS ───
+function renderPrayers() {
+  const grid = document.getElementById('prayer-grid');
+  grid.innerHTML = '';
+  PRAYERS_DEF.forEach((p,pi) => {
+    const row = document.createElement('div');
+    row.className = 'prayer-row';
+    const checks = p.items.map((lbl,si)=>{
+      const k=`p${pi}-${si}`;
+      const done=!!state.deen[k];
+      return `<div class="p-dot${done?' done':''}" onclick="toggleDeen('${k}')">
+        <div class="p-box">✓</div>
+        <div class="p-lbl">${lbl}</div>
+      </div>`;
+    }).join('');
+    row.innerHTML = `<div class="prayer-name">${p.n}<span style="font-size:10px;color:var(--muted);font-weight:400">${p.items.length-1} sunnah</span></div><div class="prayer-checks">${checks}</div>`;
+    grid.appendChild(row);
+  });
+
+  const extras = document.getElementById('extra-prayers');
+  extras.innerHTML = '';
+  [{n:"الضحى — Duha",s:"2–8 rak'ah after sunrise",k:"duha"},
+   {n:"الوتر — Witr",s:"Before sleeping — min 1 rak'ah",k:"witr"}
+  ].forEach(p=>{
+    const done=!!state.deen[p.k];
+    const div=document.createElement('div');
+    div.className='check-item'+(done?' done':'');
+    div.innerHTML=`<div class="check-box">✓</div><div style="flex:1"><div class="check-label">${p.n}</div><div class="check-sub">${p.s}</div></div>`;
+    div.onclick=()=>{state.deen[p.k]=!state.deen[p.k];LS.set('deen_'+TODAY_KEY(),state.deen);renderPrayers();};
+    extras.appendChild(div);
+  });
+
+  // Quran days
+  const qdays = document.getElementById('quran-days');
+  qdays.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const k='q'+i; const done=!!state.deen[k]; const isFri=i===4;
+    const div=document.createElement('div');
+    div.onclick=()=>{state.deen[k]=!state.deen[k];LS.set('deen_'+TODAY_KEY(),state.deen);renderPrayers();};
+    div.style.cssText=`cursor:pointer;padding:10px 8px;border-radius:8px;text-align:center;flex:1;min-width:40px;border:1.5px solid ${done?'var(--green)':isFri?'var(--gold)':'var(--border)'};background:${done?'rgba(95,186,125,.12)':isFri?'rgba(232,197,71,.07)':'var(--surf2)'}`;
+    div.innerHTML=`<div style="font-size:10px;font-family:monospace;color:${done?'var(--green)':isFri?'var(--gold)':'var(--muted)'}">${d}</div><div style="font-size:15px;margin:3px 0">${done?'✓':isFri?'📖':'○'}</div>${isFri?'<div style="font-size:8px;color:var(--gold)">Kahf</div>':''}`;
+    qdays.appendChild(div);
+  });
+
+  // Fasting
+  const fg = document.getElementById('fast-grid');
+  fg.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const isFast=i===0||i===2; const k='f'+i; const done=!!state.deen[k];
+    const div=document.createElement('div');
+    div.className='fast-day'+(done?' fasting-done':isFast?' fasting':'');
+    div.innerHTML=`<div class="fd-d">${d}</div><div class="fd-i">${done?'✓':isFast?'🌙':'—'}</div>`;
+    if(isFast) div.onclick=()=>{state.deen[k]=!state.deen[k];LS.set('deen_'+TODAY_KEY(),state.deen);renderPrayers();};
+    fg.appendChild(div);
+  });
+}
+
+function toggleDeen(k){
+  state.deen[k]=!state.deen[k];
+  LS.set('deen_'+TODAY_KEY(),state.deen);
+  renderPrayers();
+}
+
+// ─── SADAQA ───
+function toggleSadaqa(){
+  const key='sadaqa_'+new Date().toISOString().slice(0,7);
+  state.sadaqa=!state.sadaqa;
+  LS.set(key,state.sadaqa);
+  const btn=document.getElementById('sadaqa-btn');
+  btn.textContent=state.sadaqa?'✓ Given this month — بارك الله فيك':'Mark as Given This Month ✓';
+  btn.style.background=state.sadaqa?'var(--green)':'var(--gold)';
+  btn.style.color='#0a0a0f';
+}
+(()=>{
+  if(state.sadaqa){
+    const btn=document.getElementById('sadaqa-btn');
+    btn.textContent='✓ Given this month — بارك الله فيك';
+    btn.style.background='var(--green)';btn.style.color='#0a0a0f';
+  }
+})();
+
+// ─── STUDY ───
+function renderStudy(){
+  const list=document.getElementById('study-list');
+  list.innerHTML='';
+  const today=new Date();
+  STUDY_DAYS.forEach((s,i)=>{
+    const d=new Date(today);d.setDate(today.getDate()+i);
+    const ds=d.toLocaleDateString('en-GB',{weekday:'short',month:'short',day:'numeric'});
+    const done=!!state.study[i];
+    const div=document.createElement('div');
+    div.className='study-item'+(s.exam?' exam':done?' s-done':'');
+    div.innerHTML=`<div class="s-num">${i+1}</div>
+      <div><div class="s-date">${ds}</div><div class="s-task">${s.l}</div>
+      <div class="s-sub">${s.t}${s.r?' · '+s.r:''}</div></div>
+      <div class="s-chk${done?' done':''}" onclick="toggleStudy(${i})">✓</div>`;
+    list.appendChild(div);
+  });
+}
+function toggleStudy(i){
+  state.study[i]=!state.study[i];
+  LS.set('study_persistent',state.study);
+  renderStudy();
+}
+
+// ─── WORKOUT ───
+function renderWorkout(){
+  const container=document.getElementById('workout-days');
+  container.innerHTML='';
+  WO_DAYS.forEach((wo,wi)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.marginBottom='12px';
+    let rows=wo.exercises.map((ex,ei)=>{
+      const wk=`w${wi}-${ei}`;
+      const saved=state.weights[wk]||'';
+      return `<tr>
+        <td><div class="ex-name">${ex[0]}</div><div class="ex-alt">${ex[3]}</div></td>
+        <td style="text-align:center;font-family:monospace;color:var(--gold)">${ex[1]}</td>
+        <td style="text-align:center;font-family:monospace">${ex[2]}</td>
+        <td><input class="weight-input" type="text" placeholder="kg" value="${saved}" onchange="saveWeight('${wk}',this.value)" inputmode="decimal"/></td>
+      </tr>`;
+    }).join('');
+    card.innerHTML=`<div class="card-title">${wo.title}</div>
+      <div style="overflow-x:auto">
+        <table class="wo-table">
+          <thead><tr>
+            <th>Exercise</th><th>Sets</th><th>Reps</th><th>Weight</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+function saveWeight(k,v){
+  state.weights[k]=v;
+  LS.set('weights_persistent',state.weights);
+}
+
+// ─── GROCERY ───
+function renderGrocery(){
+  const list=document.getElementById('grocery-list');
+  list.innerHTML='';
+  GROCERIES.forEach((g,i)=>{
+    const done=!!state.grocery[i];
+    const div=document.createElement('div');
+    div.className='g-item'+(done?' done':'');
+    div.innerHTML=`<div class="g-box">✓</div><span>${g}</span>`;
+    div.onclick=()=>{state.grocery[i]=!state.grocery[i];LS.set('grocery_persistent',state.grocery);renderGrocery();};
+    list.appendChild(div);
+  });
+}
+
+// ─── HISTORY ───
+function renderHistory(){
+  const history=LS.get('history',[]);
+  const list=document.getElementById('history-list');
+  if(!history.length){
+    list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">No history yet. Complete habits today and they\'ll appear here tomorrow.</div>';
+    return;
+  }
+  list.innerHTML='';
+  history.forEach(entry=>{
+    const hh=entry.habits||{};
+    const todayDow=(new Date(entry.date).getDay()+6)%7;
+    const relevant=HABITS_DEF.filter((h,i)=>h.days==='all'||h.days.includes(todayDow));
+    const total=relevant.length;
+    const done=relevant.filter((h,i)=>hh[HABITS_DEF.indexOf(h)]).length;
+    const pct=total>0?Math.round(done/total*100):0;
+    const d=new Date(entry.date);
+    const dateStr=d.toLocaleDateString('en-GB',{weekday:'long',month:'short',day:'numeric'});
+    const div=document.createElement('div');
+    div.className='history-item';
+    const color=pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+    const pills=relevant.map(h=>{
+      const idx=HABITS_DEF.indexOf(h);
+      const done2=!!hh[idx];
+      return `<span class="pill ${done2?'done':'miss'}">${h.l}</span>`;
+    }).join('');
+    div.innerHTML=`<div class="history-date">${dateStr}</div>
+      <div class="history-score" style="color:${color}">${done}/${total} habits — ${pct}%</div>
+      <div class="history-pills">${pills}</div>`;
+    list.appendChild(div);
+  });
+}
+
+// ─── INIT ───
+checkDailyReset();
+updateDateHeader();
+renderHabits();
+renderPrayers();
+renderStudy();
+renderWorkout();
+renderGrocery();
+renderHistory();
+
+// Auto-refresh at midnight
+const now=new Date();
+const msToMidnight=(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)-now);
+setTimeout(()=>{checkDailyReset();renderHabits();renderPrayers();updateDateHeader();},msToMidnight);
+</script>
+</body>
+</html>
