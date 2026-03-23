@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>My System</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{--bg:#1a0f0a;--surf:#241510;--surf2:#2e1c12;--surf3:#3a2318;--border:#4a3020;--border2:#5a3d28;--gold:#c8956a;--gold2:#e8b48a;--gold3:#f5d0a8;--teal:#8fb8a0;--text:#f0e0d0;--muted:#8a7060;--green:#7ab08a;--red:#c06858;--accent:#d4875a;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -753,10 +753,60 @@ function ss(st){
   else{d.className='sync-dot error';t.textContent='Sync error';}
 }
 
+function loadLocalData(td){
+  C.ch=LS.g('ch3',[]);C.todos=LS.g('todos3',[]);C.reps=LS.g('reps3',{});
+  C.notes=LS.g('notes3',{});
+  C.prot=LS.g('prot_'+td,{a:0,b:0,s:0});
+  C.water=LS.g('water_'+td,0);
+  C.waterTarget=LS.g('waterTarget',8);
+  C.mood=LS.g('mood_'+td,'');
+  C.energy=LS.g('energy_'+td,'');
+  C.examDate=LS.g('examDate','');
+  C.examTotal=LS.g('examTotal',51);
+  C.studyDone=LS.g('studyDone3',{});
+  C.reviews=LS.g('reviews3',[]);
+}
+
 async function loadAll(){
   ss('syncing');
+  const td=TODAY(),mo=MONTH();
+  loadLocalData(td);
+
+  // Timeout after 8 seconds — render with local data if Supabase is slow
+  const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
+
   try{
-    const td=TODAY(),mo=MONTH();
+    const fetchData=Promise.all([
+      sb.from('habit_logs').select('*').eq('date',td),
+      sb.from('deen_logs').select('*').eq('date',td),
+      sb.from('workout_weights').select('*'),
+      sb.from('grocery_items').select('*'),
+      sb.from('sadaqa_logs').select('*').eq('month',mo),
+    ]);
+    const[h,d,w,g,sa]=await Promise.race([fetchData,timeout]);
+    C.habits={};(h.data||[]).forEach(r=>C.habits[r.habit_index]=r.done);
+    C.deen={};(d.data||[]).forEach(r=>C.deen[r.key]=r.done);
+    C.weights={};(w.data||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
+    C.grocery={};(g.data||[]).forEach(r=>C.grocery[r.item_index]=r.done);
+    C.sadaqa=sa.data&&sa.data.length>0?sa.data[0].done:false;
+    ss('ok');
+  }catch(e){
+    if(e.message==='timeout'){
+      document.getElementById('sync-txt').textContent='Loading locally — syncing in background...';
+      document.getElementById('sync-dot').className='sync-dot syncing';
+      // Keep trying in background every 5 seconds
+      backgroundSync(td,mo);
+    } else {
+      ss('error');console.error(e);
+    }
+  }
+  renderAll();
+}
+
+async function backgroundSync(td,mo,attempts=0){
+  if(attempts>10)return; // give up after ~50 seconds
+  await new Promise(r=>setTimeout(r,5000));
+  try{
     const[h,d,w,g,sa]=await Promise.all([
       sb.from('habit_logs').select('*').eq('date',td),
       sb.from('deen_logs').select('*').eq('date',td),
@@ -769,19 +819,11 @@ async function loadAll(){
     C.weights={};(w.data||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
     C.grocery={};(g.data||[]).forEach(r=>C.grocery[r.item_index]=r.done);
     C.sadaqa=sa.data&&sa.data.length>0?sa.data[0].done:false;
-    C.ch=LS.g('ch3',[]);C.todos=LS.g('todos3',[]);C.reps=LS.g('reps3',{});
-    C.notes=LS.g('notes3',{});
-    C.prot=LS.g('prot_'+td,{a:0,b:0,s:0});
-    C.water=LS.g('water_'+td,0);
-    C.waterTarget=LS.g('waterTarget',8);
-    C.mood=LS.g('mood_'+td,'');
-    C.energy=LS.g('energy_'+td,'');
-    C.examDate=LS.g('examDate','');
-    C.examTotal=LS.g('examTotal',51);
-    C.studyDone=LS.g('studyDone3',{});
-    C.reviews=LS.g('reviews3',[]);
-    ss('ok');renderAll();
-  }catch(e){ss('error');console.error(e);}
+    ss('ok');
+    renderAll(); // re-render with fresh cloud data
+  }catch(e){
+    backgroundSync(td,mo,attempts+1); // try again
+  }
 }
 
 async function uH(i,v){ss('syncing');await sb.from('habit_logs').upsert({date:TODAY(),habit_index:i,done:v},{onConflict:'date,habit_index'});ss('ok');}
