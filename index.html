@@ -620,22 +620,7 @@ input,textarea,select{font-family:inherit;}
 <script>
 const SURL='https://ysopxwlahtcnjsfkwctn.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzb3B4d2xhaHRjbmpzZmt3Y3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzIwMjAsImV4cCI6MjA4OTc0ODAyMH0.6cWOSC4N73HYogfKGUyfkViRY-P-fxVFyruAqhl58uM';
-let sbClient=null;
-function getSB(){if(sbClient)return sbClient;sbClient=window.supabase.createClient(SURL,SKEY);return sbClient;}
-
-const db={
-  async get(table,filters={}){
-    let q=getSB().from(table).select('*');
-    Object.entries(filters).forEach(([k,v])=>{q=q.eq(k,v);});
-    const{data,error}=await q;
-    if(error){console.error('DB GET error on '+table+':',JSON.stringify(error));throw error;}
-    return data||[];
-  },
-  async upsert(table,data,conflict){
-    const{error}=await getSB().from(table).upsert(data,conflict?{onConflict:conflict}:{});
-    if(error){console.error('DB UPSERT error on '+table+':',JSON.stringify(error));throw error;}
-  }
-};
+const sb=supabase.createClient(SURL,SKEY);
 const TODAY=()=>new Date().toISOString().split('T')[0];
 const MONTH=()=>new Date().toISOString().slice(0,7);
 const WEEK=()=>{const d=new Date();const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);const mon=new Date(d.setDate(diff));return mon.toISOString().split('T')[0];};
@@ -793,18 +778,18 @@ async function loadAll(){
 
   try{
     const fetchData=Promise.all([
-      db.get('habit_logs',{date:td}),
-      db.get('deen_logs',{date:td}),
-      db.get('workout_weights'),
-      db.get('grocery_items'),
-      db.get('sadaqa_logs',{month:mo}),
+      sb.from('habit_logs').select('*').eq('date',td),
+      sb.from('deen_logs').select('*').eq('date',td),
+      sb.from('workout_weights').select('*'),
+      sb.from('grocery_items').select('*'),
+      sb.from('sadaqa_logs').select('*').eq('month',mo),
     ]);
     const[h,d,w,g,sa]=await Promise.race([fetchData,timeout]);
-    C.habits={};(h||[]).forEach(r=>C.habits[r.habit_index]=r.done);
-    C.deen={};(d||[]).forEach(r=>C.deen[r.key]=r.done);
-    C.weights={};(w||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
-    C.grocery={};(g||[]).forEach(r=>C.grocery[r.item_index]=r.done);
-    C.sadaqa=sa&&sa.length>0?sa[0].done:false;
+    C.habits={};(h.data||[]).forEach(r=>C.habits[r.habit_index]=r.done);
+    C.deen={};(d.data||[]).forEach(r=>C.deen[r.key]=r.done);
+    C.weights={};(w.data||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
+    C.grocery={};(g.data||[]).forEach(r=>C.grocery[r.item_index]=r.done);
+    C.sadaqa=sa.data&&sa.data.length>0?sa.data[0].done:false;
     ss('ok');
   }catch(e){
     const msg=e?.message||JSON.stringify(e)||'unknown';
@@ -826,17 +811,17 @@ async function backgroundSync(td,mo,attempts=0){
   await new Promise(r=>setTimeout(r,5000));
   try{
     const[h,d,w,g,sa]=await Promise.all([
-      db.get('habit_logs',{date:td}),
-      db.get('deen_logs',{date:td}),
-      db.get('workout_weights'),
-      db.get('grocery_items'),
-      db.get('sadaqa_logs',{month:mo}),
+      sb.from('habit_logs').select('*').eq('date',td),
+      sb.from('deen_logs').select('*').eq('date',td),
+      sb.from('workout_weights').select('*'),
+      sb.from('grocery_items').select('*'),
+      sb.from('sadaqa_logs').select('*').eq('month',mo),
     ]);
-    C.habits={};(h||[]).forEach(r=>C.habits[r.habit_index]=r.done);
-    C.deen={};(d||[]).forEach(r=>C.deen[r.key]=r.done);
-    C.weights={};(w||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
-    C.grocery={};(g||[]).forEach(r=>C.grocery[r.item_index]=r.done);
-    C.sadaqa=sa&&sa.length>0?sa[0].done:false;
+    C.habits={};(h.data||[]).forEach(r=>C.habits[r.habit_index]=r.done);
+    C.deen={};(d.data||[]).forEach(r=>C.deen[r.key]=r.done);
+    C.weights={};(w.data||[]).forEach(r=>C.weights[r.exercise_key]=r.weight);
+    C.grocery={};(g.data||[]).forEach(r=>C.grocery[r.item_index]=r.done);
+    C.sadaqa=sa.data&&sa.data.length>0?sa.data[0].done:false;
     ss('ok');
     renderAll(); // re-render with fresh cloud data
   }catch(e){
@@ -844,11 +829,11 @@ async function backgroundSync(td,mo,attempts=0){
   }
 }
 
-async function uH(i,v){ss('syncing');try{await db.upsert('habit_logs',{date:TODAY(),habit_index:i,done:v},'date,habit_index');ss('ok');}catch(e){ss('error');}}
-async function uD(k,v){ss('syncing');try{await db.upsert('deen_logs',{date:TODAY(),key:k,done:v},'date,key');ss('ok');}catch(e){ss('error');}}
-async function uW(k,v){ss('syncing');try{await db.upsert('workout_weights',{exercise_key:k,weight:v,updated_at:new Date().toISOString()},'exercise_key');ss('ok');}catch(e){ss('error');}}
-async function uG(i,v){ss('syncing');try{await db.upsert('grocery_items',{item_index:i,done:v,updated_at:new Date().toISOString()},'item_index');ss('ok');}catch(e){ss('error');}}
-async function uSa(v){ss('syncing');try{await db.upsert('sadaqa_logs',{month:MONTH(),done:v,updated_at:new Date().toISOString()},'month');ss('ok');}catch(e){ss('error');}}
+async function uH(i,v){ss('syncing');try{const{error}=await sb.from('habit_logs').upsert({date:TODAY(),habit_index:i,done:v},{onConflict:'date,habit_index'});if(error)throw error;ss('ok');}catch(e){ss('error');console.error(e);}}
+async function uD(k,v){ss('syncing');try{const{error}=await sb.from('deen_logs').upsert({date:TODAY(),key:k,done:v},{onConflict:'date,key'});if(error)throw error;ss('ok');}catch(e){ss('error');}}
+async function uW(k,v){ss('syncing');try{const{error}=await sb.from('workout_weights').upsert({exercise_key:k,weight:v,updated_at:new Date().toISOString()},{onConflict:'exercise_key'});if(error)throw error;ss('ok');}catch(e){ss('error');}}
+async function uG(i,v){ss('syncing');try{const{error}=await sb.from('grocery_items').upsert({item_index:i,done:v,updated_at:new Date().toISOString()},{onConflict:'item_index'});if(error)throw error;ss('ok');}catch(e){ss('error');}}
+async function uSa(v){ss('syncing');try{const{error}=await sb.from('sadaqa_logs').upsert({month:MONTH(),done:v,updated_at:new Date().toISOString()},{onConflict:'month'});if(error)throw error;ss('ok');}catch(e){ss('error');}}
 
 function switchTab(id,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
@@ -1246,10 +1231,9 @@ async function renderHistory(){
 const list=document.getElementById(‘history-list’);
 list.innerHTML=’<div class="loading"><div class="spinner"></div>Loading…</div>’;
 try{
-const all=await db.get(‘habit_logs’);
-const filtered=all.filter(r=>r.date!==TODAY()).sort((a,b)=>b.date.localeCompare(a.date));
-if(!filtered.length){list.innerHTML=’<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">No history yet. Complete habits today and check back tomorrow.</div>’;return;}
-const bD={};filtered.forEach(r=>{if(!bD[r.date])bD[r.date]={};bD[r.date][r.habit_index]=r.done;});
+const{data}=await sb.from(‘habit_logs’).select(’*’).neq(‘date’,TODAY()).order(‘date’,{ascending:false});
+if(!data||!data.length){list.innerHTML=’<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">No history yet. Complete habits today and check back tomorrow.</div>’;return;}
+const bD={};data.forEach(r=>{if(!bD[r.date])bD[r.date]={};bD[r.date][r.habit_index]=r.done;});
 const dates=Object.keys(bD).sort().reverse();list.innerHTML=’’;
 dates.forEach(date=>{
 const hh=bD[date];const d=new Date(date);const dow=(d.getDay()+6)%7;
