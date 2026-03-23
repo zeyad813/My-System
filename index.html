@@ -620,7 +620,7 @@ input,textarea,select{font-family:inherit;}
 <script>
 const SURL='https://ysopxwlahtcnjsfkwctn.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzb3B4d2xhaHRjbmpzZmt3Y3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzIwMjAsImV4cCI6MjA4OTc0ODAyMH0.6cWOSC4N73HYogfKGUyfkViRY-P-fxVFyruAqhl58uM';
-const sb=supabase.createClient(SURL,SKEY);
+let sb=null;
 const TODAY=()=>new Date().toISOString().split('T')[0];
 const MONTH=()=>new Date().toISOString().slice(0,7);
 const WEEK=()=>{const d=new Date();const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);const mon=new Date(d.setDate(diff));return mon.toISOString().split('T')[0];};
@@ -772,8 +772,6 @@ async function loadAll(){
   ss('syncing');
   const td=TODAY(),mo=MONTH();
   loadLocalData(td);
-
-  // Timeout after 8 seconds — render with local data if Supabase is slow
   const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
 
   try{
@@ -1257,7 +1255,8 @@ renderMood();renderWater();renderProtein();
 }
 
 updateDate();
-window.addEventListener(‘load’, function() {
+document.addEventListener(‘DOMContentLoaded’, function() {
+sb = supabase.createClient(SURL, SKEY);
 loadAll();
 });
 </script>
