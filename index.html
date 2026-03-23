@@ -1256,7 +1256,10 @@ renderStudy();renderWorkout();renderMeals();renderTodos();
 renderMood();renderWater();renderProtein();
 }
 
-updateDate();loadAll();
+updateDate();
+window.addEventListener(‘load’, function() {
+loadAll();
+});
 </script>
 
 </body>
