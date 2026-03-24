@@ -1,70 +1,23 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Discipline System PRO</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" onload="initSB()"></script>
-<style>
-:root{--bg:#1a0f0a;--gold:#c8956a;--text:#f5e6d8}
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;background:#120905;padding:10px;z-index:10}
-.bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-button{background:none;border:1px solid var(--gold);color:var(--text);padding:5px 8px;border-radius:6px}
-.tabs{display:flex;overflow-x:auto;gap:6px;padding:8px}
-.page{display:none;padding:10px}
-.page.active{display:block}
-.card{border:1px solid var(--gold);border-radius:10px;padding:10px;margin-bottom:10px}
-input,textarea{width:100%;background:#120905;color:white;border:1px solid var(--gold);margin-top:5px}
-.progress{height:10px;background:#333;border-radius:5px;margin-top:8px}
-.progress div{height:100%;background:var(--gold)}
-</style>
+<title>Discipline System</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
+
 <header>
-<div class="bar" id="moodBar"></div>
-<div class="bar" id="waterBar"></div>
-<div id="syncStatus">Connecting...</div>
+  <div id="topBars"></div>
+  <div id="syncStatus">Connecting...</div>
 </header>
-<div class="tabs" id="tabs"></div>
+
+<div id="tabs"></div>
 <div id="pages"></div>
-<script>
-const tabs=["Routine","Habits","To-Do","Deen","Study","Workout","Meals","Budget","Review","History","Identity"];
-const pagesEl=document.getElementById('pages');
-const tabsEl=document.getElementById('tabs');function today(){return new Date().toISOString().slice(0,10)}
 
-let state={ todos:JSON.parse(localStorage.getItem('todos3')||'[]'), habits:JSON.parse(localStorage.getItem('habits3')||'[]'), water:parseInt(localStorage.getItem('water_'+today())||0), waterTarget:parseInt(localStorage.getItem('wt3')||8), protein:{A:localStorage.getItem('mealA_'+today())==='1',B:localStorage.getItem('mealB_'+today())==='1'}, reviews:JSON.parse(localStorage.getItem('reviews3')||'[]'), social:parseFloat(localStorage.getItem('social_'+today())||0) };
-
-// Tabs tabs.forEach((t,i)=>{ let b=document.createElement('button');b.textContent=t;b.onclick=()=>showPage(i);tabsEl.appendChild(b); let p=document.createElement('div');p.className='page'+(i==0?' active':'');p.id='page'+i;pagesEl.appendChild(p); }); function showPage(i){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page'+i).classList.add('active')}
-
-// Mood/Energy ["😴","😐","😊","🔥","🔋","⚡","🚀"].forEach(x=>{ let b=document.createElement('button');b.textContent=x;b.onclick=()=>localStorage.setItem(x.length==2?'energy_'+today():'mood_'+today(),x); document.getElementById('moodBar').appendChild(b); });
-
-// Water function renderWater(){ let bar=document.getElementById('waterBar');bar.innerHTML=''; for(let i=0;i<state.waterTarget;i++){ let b=document.createElement('button');b.textContent=i<state.water?'💧':'▫️'; b.onclick=()=>{state.water=i+1;localStorage.setItem('water_'+today(),state.water);renderWater()};bar.appendChild(b)} let s=document.createElement('button');s.textContent='⚙️'; s.onclick=()=>{let t=prompt('Target',state.waterTarget);if(t){state.waterTarget=t;localStorage.setItem('wt3',t);renderWater()}}; bar.appendChild(s)} renderWater();
-
-// HABITS FULL CUSTOM function renderHabits(){ let page=document.getElementById('page1');page.innerHTML=''; state.habits.forEach((h,i)=>{ let c=document.createElement('div');c.className='card'; c.innerHTML=${h.name}<br><small>${h.days||'Daily'}</small>; c.onclick=()=>{h.done=!h.done;saveHabits()}; if(h.done)c.style.background='#2a1a12'; let del=document.createElement('button');del.textContent='X'; del.onclick=(e)=>{e.stopPropagation();state.habits.splice(i,1);saveHabits()}; c.appendChild(del); page.appendChild(c); }); let add=document.createElement('button');add.textContent='Add Habit'; add.onclick=()=>{ let name=prompt('Habit');if(!name)return; let days=prompt('Days (e.g. Mon,Wed or Daily)'); state.habits.push({name,days,done:false});saveHabits()}; page.appendChild(add); } function saveHabits(){localStorage.setItem('habits3',JSON.stringify(state.habits));renderHabits()} renderHabits();
-
-// TODO UPGRADED function renderTodos(){ let page=document.getElementById('page2');page.innerHTML=''; state.todos.forEach((t,i)=>{ let c=document.createElement('div');c.className='card'; c.innerHTML=<b>${t.label}</b><br>${t.tag||''}; let done=document.createElement('button');done.textContent=t.done?'✓':'○'; done.onclick=()=>{t.done=!t.done;saveTodos()}; c.appendChild(done); let del=document.createElement('button');del.textContent='X'; del.onclick=()=>{state.todos.splice(i,1);saveTodos()}; c.appendChild(del); page.appendChild(c); }); let add=document.createElement('button');add.textContent='Add Task'; add.onclick=()=>{ let l=prompt('Task');let tag=prompt('Tag'); state.todos.push({label:l,tag,done:false});saveTodos()}; page.appendChild(add); } function saveTodos(){localStorage.setItem('todos3',JSON.stringify(state.todos));renderTodos()} renderTodos();
-
-// MEALS + PROTEIN function renderMeals(){ let page=document.getElementById('page6');page.innerHTML=''; let mealA=document.createElement('div');mealA.className='card'; mealA.innerHTML=`<b>Meal A (Chicken ~300-400g = main protein)</b><br> <button onclick="toggleMeal('A')">${state.protein.A?'✓ Done':'Mark Done'}</button>
-
-<details><summary>Recipe</summary>
-Chicken Shawarma Style:<br>Cut chicken, add spices, pan cook 10-15min.<br>
-Spicy Tomato:<br>Cook chicken + tomato + garlic.<br>
-Garlic Butter:<br>Butter + garlic + chicken.<br></details>`;
-page.appendChild(mealA);let mealB=document.createElement('div');mealB.className='card'; mealB.innerHTML=`<b>Meal B (4 Eggs)</b><br> <button onclick="toggleMeal('B')">${state.protein.B?'✓ Done':'Mark Done'}</button>
-
-<details><summary>Recipe</summary>
-4 eggs + potatoes optional, cook as skillet or shakshouka.
-</details>`;
-page.appendChild(mealB);let total=document.createElement('div');total.className='card'; let val=(state.protein.A?1:0)+(state.protein.B?1:0); total.innerHTML=Meals completed: ${val}/2; page.appendChild(total); } function toggleMeal(m){state.protein[m]=!state.protein[m];localStorage.setItem('meal'+m+'_'+today(),state.protein[m]?'1':'0');renderMeals()} renderMeals();
-
-// SOCIAL TRACKER let habitsPage=document.getElementById('page1'); let socialBox=document.createElement('div');socialBox.className='card'; socialBox.innerHTML=Social Media Hours: ${state.social}<br> <button onclick="logSocial()">Log Time</button>; habitsPage.appendChild(socialBox); function logSocial(){let v=prompt('Hours today');if(!v)return;state.social=parseFloat(v);localStorage.setItem('social_'+today(),v);location.reload()}
-
-// REVIEW function renderReview(){ let page=document.getElementById('page8');page.innerHTML=''; let btn=document.createElement('button');btn.textContent='Add Review'; btn.onclick=()=>{ let r=prompt('1-10');let note=prompt('Improve'); state.reviews.push({date:today(),r,note});localStorage.setItem('reviews3',JSON.stringify(state.reviews));renderReview()}; page.appendChild(btn); state.reviews.forEach(r=>{let c=document.createElement('div');c.className='card';c.textContent=r.date+' | '+r.r+'/10 | '+r.note;page.appendChild(c)}) } renderReview();
-
-// IDENTITY + RELAPSE BUTTON let id=document.getElementById('page10'); id.innerHTML=`<div class='card'> <b>Identity:</b><br>Disciplined. Focused. Strong.<br><br> <button onclick="relapse()">I messed up</button>
-
-</div>`;
-function relapse(){alert('Make wudu → Pray 2 rakat → Continue your day. No restart.')}// SUPABASE let sb; function initSB(){ sb=supabase.createClient('https://ysopxwlahtcnjsfkwctn.supabase.co','sb_publishable_KI54ieEUyiE6QVwpT3Bmkg_BosdmNua'); document.getElementById('syncStatus').textContent='Synced ✓'} </script>
-
+<script src="supabase.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
